@@ -1,6 +1,9 @@
 import os
 import telebot
 from telebot.types import KeyboardButton, ReplyKeyboardMarkup
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Inicializar el bot con el token de Telegram proporcionado
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
