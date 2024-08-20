@@ -19,3 +19,9 @@ Para ejecutar el bot localmente, necesitas lo siguiente:
 
 > [!NOTE]
 > Sustituye "TELEGRAM_TOKEN" en el código del bot por tu token bot real.
+
+Para probar localmente eliminar el webhook, scar las partes comentadas
+```
+#bot.remove_webhook()
+#print("Webhook eliminado.")
+```

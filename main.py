@@ -8,6 +8,9 @@ load_dotenv()
 # Inicializar el bot con el token de Telegram proporcionado
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
+# Eliminar el webhook for local testing
+#bot.remove_webhook()
+#print("Webhook eliminado.")
 
 # Definir un gestor de mensajes para los comandos /start y /help.
 @bot.message_handler(commands=["start", "help"])
