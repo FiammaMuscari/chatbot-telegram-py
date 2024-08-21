@@ -1,18 +1,39 @@
 import os
 import telebot
-from telebot.types import KeyboardButton, ReplyKeyboardMarkup
+from flask import Flask, request
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # Inicializar el bot con el token de Telegram proporcionado
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
-# Eliminar el webhook for local testing
-#bot.remove_webhook()
-#print("Webhook eliminado.")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
-# Definir un gestor de mensajes para los comandos /start y /help.
+bot = telebot.TeleBot(TELEGRAM_TOKEN)
+
+# Define una aplicación Flask
+app = Flask(__name__)
+
+# Define la ruta para el webhook
+@app.route(f'/{TELEGRAM_TOKEN}', methods=['POST'])
+def webhook():
+    json_str = request.get_data().decode('UTF-8')
+    update = telebot.types.Update.de_json(json_str)
+    bot.process_new_updates([update])
+    return '', 200
+
+# Configura el webhook cuando el script se ejecuta
+def set_webhook():
+    try:
+        bot.remove_webhook()
+        bot.set_webhook(url=WEBHOOK_URL)
+        print("Webhook establecido.")
+    except Exception as e:
+        print(f"Error al establecer el webhook: {e}")
+
+set_webhook()
+
+# Definir los manejadores de mensajes
 @bot.message_handler(commands=["start", "help"])
 def send_welcome(message):
     bot.reply_to(
@@ -27,7 +48,6 @@ def send_welcome(message):
     """
     )
 
-# Definir un manejador de mensajes para el comando /products
 @bot.message_handler(commands=["products"])
 def show_products(message):
     bot.reply_to(
@@ -41,7 +61,6 @@ def show_products(message):
     """
     )
 
-# Definir un manejador de mensajes para el comando /prices
 @bot.message_handler(commands=["prices"])
 def show_prices(message):
     bot.reply_to(
@@ -55,7 +74,6 @@ def show_prices(message):
     """
     )
 
-# Definir un manejador de mensajes para el comando /hours
 @bot.message_handler(commands=["hours"])
 def show_hours(message):
     bot.reply_to(
@@ -68,7 +86,6 @@ def show_hours(message):
     """
     )
 
-# Definir un manejador de mensajes para el comando /contact
 @bot.message_handler(commands=["contact"])
 def show_contact(message):
     bot.reply_to(
@@ -79,12 +96,10 @@ def show_contact(message):
     """
     )
 
-# Definir un gestor de mensajes para textos generales y palabras sueltas
 @bot.message_handler(content_types=["text"])
 def respond_to_text(message):
     text = message.text.lower()
     
-    # Respuestas para palabras sueltas
     responses = {
         "camisas": "¡Nuestras camisas están disponibles en varios colores y tallas!",
         "pantalones": "Tenemos pantalones en diferentes estilos y materiales.",
@@ -94,13 +109,11 @@ def respond_to_text(message):
         "envíos": "Los envíos son gratis para compras superiores a $100.",
     }
     
-    # Chequear si el texto del mensaje coincide con alguna de las palabras clave
     for keyword, response in responses.items():
         if keyword in text:
             bot.reply_to(message, response)
             return
 
-    # Responder a saludos comunes
     if text in ["hola", "hello", "hi"]:
         bot.send_message(
             message.chat.id,
@@ -112,5 +125,6 @@ def respond_to_text(message):
             "Lo siento, no entiendo tu mensaje. Usa /help para ver los comandos disponibles.",
         )
 
-# Empezar a recibir mensajes
-bot.polling()
+# Iniciar el servidor Flask
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
