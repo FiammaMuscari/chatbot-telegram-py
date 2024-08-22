@@ -2,12 +2,21 @@ import os
 import telebot
 from flask import Flask, request
 from dotenv import load_dotenv
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
 # Inicializar el bot con el token de Telegram proporcionado
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+
+if not TELEGRAM_TOKEN or not WEBHOOK_URL:
+    logger.error("Faltan variables de entorno TELEGRAM_TOKEN o WEBHOOK_URL.")
+    exit(1)
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
 
@@ -27,9 +36,9 @@ def set_webhook():
     try:
         bot.remove_webhook()
         bot.set_webhook(url=WEBHOOK_URL)
-        print("Webhook establecido.")
+        logger.info("Webhook establecido.")
     except Exception as e:
-        print(f"Error al establecer el webhook: {e}")
+        logger.error(f"Error al establecer el webhook: {e}")
 
 set_webhook()
 
@@ -127,4 +136,7 @@ def respond_to_text(message):
 
 # Iniciar el servidor Flask
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+    try:
+        app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+    except Exception as e:
+        logger.error(f"Error al iniciar el servidor Flask: {e}")
