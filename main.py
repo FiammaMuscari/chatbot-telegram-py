@@ -1,6 +1,6 @@
 import os
 import telebot
-from telebot.types import KeyboardButton, ReplyKeyboardMarkup
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -8,22 +8,41 @@ load_dotenv()
 # Inicializar el bot con el token de Telegram proporcionado
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-# Eliminar el webhook for local testing
+
+# Eliminar el webhook para pruebas locales
 bot.remove_webhook()
- 
+
+# Crear el teclado en línea usando InlineKeyboardMarkup
+inline_keyboard = InlineKeyboardMarkup()
+
+# Botones en un diccionario
+inline_buttons = [
+    ("📥 Operar", "Operate"),
+    ("📬 Countrier", "Countier"),
+    ("📩 Español", "LangSelect"),
+    ("📤 Nosotros", "OurTeam"),
+    ("❌ Close", "Close"),
+]
+
+# Agregar los botones al teclado en línea, 2 botones por fila
+inline_keyboard.row(
+    InlineKeyboardButton(inline_buttons[0][0], callback_data=inline_buttons[0][1]),
+    InlineKeyboardButton(inline_buttons[1][0], callback_data=inline_buttons[1][1])
+)
+inline_keyboard.row(
+    InlineKeyboardButton(inline_buttons[2][0], callback_data=inline_buttons[2][1]),
+    InlineKeyboardButton(inline_buttons[3][0], callback_data=inline_buttons[3][1])
+)
+# Agregar el último botón en una fila separada
+inline_keyboard.add(InlineKeyboardButton(inline_buttons[4][0], callback_data=inline_buttons[4][1]))
+
 # Definir un gestor de mensajes para los comandos /start y /help.
 @bot.message_handler(commands=["start", "help"])
 def send_welcome(message):
     bot.reply_to(
         message,
-        """
-    ¡Hola! Bienvenido a la tienda de ropa. Estos son los comandos disponibles:
-    \n /products - Ver los productos disponibles
-    \n /prices - Consultar los precios
-    \n /hours - Consultar el horario de la tienda
-    \n /contact - Información de contacto
-    \n /start - Mensaje de bienvenida
-    """
+        f"¡Hola {message.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.",
+        reply_markup=inline_keyboard
     )
 
 # Definir un manejador de mensajes para el comando /products
@@ -37,7 +56,8 @@ def show_products(message):
     \n - Pantalones
     \n - Chaquetas
     \n - Zapatos
-    """
+    """,
+        reply_markup=inline_keyboard
     )
 
 # Definir un manejador de mensajes para el comando /prices
@@ -51,7 +71,8 @@ def show_prices(message):
     \n - Pantalones: $30
     \n - Chaquetas: $50
     \n - Zapatos: $40
-    """
+    """,
+        reply_markup=inline_keyboard
     )
 
 # Definir un manejador de mensajes para el comando /hours
@@ -64,7 +85,8 @@ def show_hours(message):
     \n Lunes a Viernes: 9:00 AM - 7:00 PM
     \n Sábados: 10:00 AM - 5:00 PM
     \n Domingos: Cerrado
-    """
+    """,
+        reply_markup=inline_keyboard
     )
 
 # Definir un manejador de mensajes para el comando /contact
@@ -75,7 +97,8 @@ def show_contact(message):
         """
     Puedes contactarnos al siguiente número de teléfono: +123456789
     \n O visitarnos en nuestra tienda en la dirección: Calle Ficticia 123, Ciudad Ejemplo
-    """
+    """,
+        reply_markup=inline_keyboard
     )
 
 # Definir un gestor de mensajes para textos generales y palabras sueltas
@@ -96,7 +119,7 @@ def respond_to_text(message):
     # Chequear si el texto del mensaje coincide con alguna de las palabras clave
     for keyword, response in responses.items():
         if keyword in text:
-            bot.reply_to(message, response)
+            bot.reply_to(message, response, reply_markup=inline_keyboard)
             return
 
     # Responder a saludos comunes
@@ -104,12 +127,32 @@ def respond_to_text(message):
         bot.send_message(
             message.chat.id,
             f"Hola {message.from_user.first_name}, ¿en qué puedo ayudarte hoy?",
+            reply_markup=inline_keyboard
         )
     else:
         bot.send_message(
             message.chat.id,
             "Lo siento, no entiendo tu mensaje. Usa /help para ver los comandos disponibles.",
+            reply_markup=inline_keyboard
         )
+
+# Manejar los callback_query para botones en línea
+@bot.callback_query_handler(func=lambda call: True)
+def handle_query(call):
+    callback_data = call.data
+
+    if callback_data == "Operate":
+        bot.answer_callback_query(call.id, "Operar seleccionado!")
+    elif callback_data == "Countier":
+        bot.answer_callback_query(call.id, "Countrier seleccionado!")
+    elif callback_data == "LangSelect":
+        bot.answer_callback_query(call.id, "Idioma seleccionado!")
+    elif callback_data == "OurTeam":
+        bot.answer_callback_query(call.id, "Nosotros seleccionado!")
+    elif callback_data == "Close":
+        bot.answer_callback_query(call.id, "Cerrando...")
+    else:
+        bot.answer_callback_query(call.id, "¡Acción desconocida!")
 
 # Empezar a recibir mensajes
 bot.polling()
