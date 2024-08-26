@@ -84,9 +84,15 @@ def reset_user_data(user_id):
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
     reset_user_data(message.from_user.id)
-    bot.reply_to(
-        message,
-        f"¡Hola {message.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.",
+    
+    # Path to the image
+    image_path = 'images/calypso.jpg'
+    
+    # Send the image
+    bot.send_photo(
+        message.chat.id,
+        photo=open(image_path, 'rb'),
+        caption=f"¡Hola {message.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.",
         reply_markup=inline_keyboard
     )
 # Handle /help command
@@ -210,12 +216,14 @@ def handle_query(call):
     elif callback_data == "LangSelect":
         bot.answer_callback_query(call.id, "Idioma seleccionado!")
     elif callback_data == "OurTeam":
-        bot.send_message(
+        # Path to the image
+        image_path = 'images/services.png'
+
+        # Send the image first
+        bot.send_photo(
             call.message.chat.id,
-            """
-            💰 Puedes conocer nuestra página web https://www.calypso.exchange/
-        \n Visitarnos en nuestra tienda, Palermo 123, B.A.
-         """,
+            photo=open(image_path, 'rb'),
+            caption="💰 Puedes conocer nuestra página web https://www.calypso.exchange/ \nVisitarnos en nuestra tienda, Palermo 123, B.A.",
             reply_markup=contact_keyboard
         )
     elif callback_data == "BackToMenu":
