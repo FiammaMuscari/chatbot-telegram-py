@@ -182,7 +182,31 @@ def handle_query(call):
         # Clear user data after sending contact info
         reset_user_data(user_id)
     elif callback_data == "Countier":
-        bot.answer_callback_query(call.id, "Countrier seleccionado!")
+        bot.send_message(
+            call.message.chat.id,
+            """
+            📦 ** Paquetes de Envío y Viajes Disponibles en USD **
+
+            Ofrecemos una variedad de opciones de envío y paquetes de viaje para satisfacer tus necesidades. Aquí tienes un breve resumen:
+
+            **Opciones de Envío**
+            - Envío Estándar:
+            Entrega confiable en 5-7 días hábiles.
+            - Envío Exprés:
+            Entrega más rápida en 2-3 días hábiles.
+            - Envío Overnight: 
+            Entrega el mismo día para necesidades urgentes.
+
+            **Paquetes de Viaje**
+            - Paquete Básico: 
+            Incluye alojamiento y seguro de viaje básico.
+            - Paquete Premium:
+            Incluye alojamiento, tours personalizados y seguro.
+            \nPara información detallada o para reservar un paquete,
+            \n por favor contáctanos directamente.
+            """,
+            reply_markup=contact_keyboard
+        )
     elif callback_data == "LangSelect":
         bot.answer_callback_query(call.id, "Idioma seleccionado!")
     elif callback_data == "OurTeam":
