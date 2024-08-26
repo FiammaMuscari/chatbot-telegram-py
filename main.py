@@ -18,9 +18,17 @@ rates = {
     'Dollar': 1 / 1400,     # 1 Peso Argentino a Dólares
     'Euro': 1 / 1500,       # 1 Peso Argentino a Euros
     'Crypto': 1 / 1355,     # 1 Peso Argentino a Cripto
-    'Usd_to_Arg': 1400,     # Factor de conversión de Dólares a Pesos
+    'Dollar_to_Arg': 1400,     # Factor de conversión de Dólares a Pesos
     'Euro_to_Arg': 1500,    # Factor de conversión de Euros a Pesos
     'Crypto_to_Arg': 1355   # Factor de conversión de Cripto a Pesos
+}
+
+# Contact links for different currencies
+contact_links = {
+    'Arg': "https://contacto-arg.com",        # Example contact link for Arg
+    'Dollar': "mailto:contact@dollar.com",    # Example mailto link for Dollar
+    'Euro': "https://contacto-euro.com",      # Example contact link for Euro
+    'Crypto': "https://contacto-crypto.com"   # Example contact link for Crypto
 }
 
 # Main inline keyboard
@@ -45,7 +53,7 @@ contact_keyboard = InlineKeyboardMarkup()
 contact_keyboard.add(InlineKeyboardButton("🔙 Volver", callback_data="BackToMenu"))
 
 # Create operation keyboard excluding the selected currency
-def create_operation_keyboard(exclude_currency):
+def create_operation_keyboard(exclude_currency=None):
     currencies = ["Arg", "Euro", "Dollar", "Crypto"]
     remaining_currencies = [currency for currency in currencies if currency != exclude_currency]
     
@@ -54,15 +62,28 @@ def create_operation_keyboard(exclude_currency):
     # Add buttons for remaining currencies
     for currency in remaining_currencies:
         keyboard.add(InlineKeyboardButton(f"💶 {currency}", callback_data=currency))
-    
+
+    return keyboard
+
+# Create a confirmation keyboard
+def create_confirmation_keyboard():
+    keyboard = InlineKeyboardMarkup()
+    keyboard.add(InlineKeyboardButton("Confirmar", callback_data="Confirmar"))
+    keyboard.add(InlineKeyboardButton("🔙 Volver", callback_data="BackToMenu"))
     return keyboard
 
 # Dictionary to store user data
 user_data = {}
 
+# Helper function to reset user data
+def reset_user_data(user_id):
+    if user_id in user_data:
+        user_data[user_id] = {}
+
 # Handle /start and /help commands
 @bot.message_handler(commands=["start", "help"])
 def send_welcome(message):
+    reset_user_data(message.from_user.id)
     bot.reply_to(
         message,
         f"¡Hola {message.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.",
@@ -102,8 +123,9 @@ def handle_query(call):
     user_id = call.from_user.id
 
     if callback_data == "Operate":
-        bot.send_message(call.message.chat.id, "Selecciona una opción para operar:", reply_markup=create_operation_keyboard(None))
-        bot.answer_callback_query(call.id, "Operar seleccionado!")
+        reset_user_data(user_id)  # Reset user data when starting a new operation
+        bot.send_message(call.message.chat.id, "Selecciona una opción para operar:", reply_markup=create_operation_keyboard())
+        
     elif callback_data in ["Arg", "Euro", "Dollar", "Crypto"]:
         if "selected_currency" not in user_data.get(user_id, {}):
             # User selects the base currency
@@ -127,13 +149,28 @@ def handle_query(call):
                 # De una moneda a otra (indirect conversion)
                 result = amount * (rates[f'{selected_currency}_to_Arg']) * rates[target_currency]
 
-            # Show result
+            # Store the result for confirmation step
+            user_data[user_id]["conversion_result"] = result
+
+            # Show result with confirmation button
             bot.send_message(
                 call.message.chat.id,
-                f"Usted desea cambiar {selected_currency} {amount} por {target_currency}: {result:.2f}"
+                f"Usted desea cambiar {selected_currency} {amount} por {target_currency}: {result:.2f}",
+                reply_markup=create_confirmation_keyboard()
             )
-            # Clear user data after conversion
-            user_data.pop(user_id, None)
+    elif callback_data == "Confirmar":
+        # User confirms the conversion and receives a contact link
+        target_currency = user_data[user_id]["target_currency"]
+        contact_link = contact_links[target_currency]  # Use target currency for contact link
+
+        # Send the contact link
+        bot.send_message(
+            call.message.chat.id,
+            f"Para completar su operación, por favor contáctenos aquí: {contact_link}"
+        )
+
+        # Clear user data after sending contact info
+        reset_user_data(user_id)
     elif callback_data == "Countier":
         bot.answer_callback_query(call.id, "Countrier seleccionado!")
     elif callback_data == "LangSelect":
@@ -147,8 +184,8 @@ def handle_query(call):
     """,
             reply_markup=contact_keyboard
         )
-        bot.answer_callback_query(call.id, "Información de contacto enviada!")
     elif callback_data == "BackToMenu":
+        reset_user_data(user_id)
         bot.send_message(
             call.message.chat.id,  
             f"¡Hola {call.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.", 
@@ -157,6 +194,7 @@ def handle_query(call):
         bot.answer_callback_query(call.id, "Regresando al menú principal.")
     else:
         bot.answer_callback_query(call.id, "¡Acción desconocida!")
+
 
 # Handle amount input
 @bot.message_handler(func=lambda message: message.from_user.id in user_data and "selected_currency" in user_data[message.from_user.id] and "amount" not in user_data[message.from_user.id])
