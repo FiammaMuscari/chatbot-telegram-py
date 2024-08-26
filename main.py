@@ -81,13 +81,35 @@ def reset_user_data(user_id):
         user_data[user_id] = {}
 
 # Handle /start and /help commands
-@bot.message_handler(commands=["start", "help"])
+@bot.message_handler(commands=["start"])
 def send_welcome(message):
     reset_user_data(message.from_user.id)
     bot.reply_to(
         message,
         f"¡Hola {message.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.",
         reply_markup=inline_keyboard
+    )
+# Handle /help command
+@bot.message_handler(commands=["help"])
+def show_help(message):
+    bot.reply_to(
+        message,
+        """
+    ¡Hola! Aquí tienes una breve explicación sobre cómo usar nuestro bot para convertir divisas:
+
+    1. **Selecciona la opción de operar**: Usa el botón 📥 "Operar" para empezar una conversión de divisas.
+
+    2. **Selecciona la moneda base**: Elige la moneda desde la que quieres convertir. Las opciones disponibles son Peso Argentino (Arg), Dólar, Euro y Cripto.
+
+    3. **Ingresa el monto**: Después de seleccionar la moneda base, ingresa el monto que deseas convertir.
+
+    4. **Selecciona la moneda de destino**: Elige la moneda a la que quieres convertir el monto ingresado. Puedes convertir a Euro, Dólar, Cripto o Peso Argentino.
+
+    5. **Confirma la conversión**: Revisa el resultado de la conversión y confirma la operación para recibir la información de contacto para completar la transacción.
+
+    Si necesitas más ayuda, no dudes en preguntar. ¡Estamos aquí para ayudarte!
+    """,
+        reply_markup=contact_keyboard
     )
 
 # Handle /hours command
@@ -103,19 +125,7 @@ def show_hours(message):
     """,
         reply_markup=inline_keyboard
     )
-
-# Handle /contact command
-@bot.message_handler(commands=["contact"])
-def show_contact(message):
-    bot.reply_to(
-        message,
-        """
-    Puedes contactarnos al siguiente número de teléfono: +123456789
-    \n O visitarnos en nuestra tienda en la dirección: Calle Ficticia 123, Ciudad Ejemplo
-    """,
-        reply_markup=contact_keyboard
-    )
-
+ 
 # Handle callback queries
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):
@@ -179,9 +189,9 @@ def handle_query(call):
         bot.send_message(
             call.message.chat.id,
             """
-    Puedes contactarnos al siguiente número de teléfono: +123456789
-    \n O visitarnos en nuestra tienda en la dirección: Calle Ficticia 123, Ciudad Ejemplo
-    """,
+            💰 Puedes conocer nuestra página web https://www.calypso.exchange/
+        \n Visitarnos en nuestra tienda, Palermo 123, B.A.
+         """,
             reply_markup=contact_keyboard
         )
     elif callback_data == "BackToMenu":
@@ -191,7 +201,6 @@ def handle_query(call):
             f"¡Hola {call.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.", 
             reply_markup=inline_keyboard
         )
-        bot.answer_callback_query(call.id, "Regresando al menú principal.")
     else:
         bot.answer_callback_query(call.id, "¡Acción desconocida!")
 
@@ -201,8 +210,11 @@ def handle_query(call):
 def handle_amount(message):
     user_id = message.from_user.id
 
+    # Reemplazar puntos por nada y comas por puntos
+    text = message.text.replace('.', '').replace(',', '.')
+
     try:
-        amount = float(message.text)
+        amount = float(text)
         user_data[user_id]["amount"] = amount
 
         user_currency = user_data[user_id]["selected_currency"]
@@ -210,11 +222,10 @@ def handle_amount(message):
         
         bot.send_message(
             message.chat.id,
-            f"Usted desea cambiar {user_currency} {amount} por:",
+            f"Usted desea cambiar {user_currency} {amount:.2f} por:",
             reply_markup=keyboard
         )
     except ValueError:
         bot.send_message(message.chat.id, "Por favor, ingresa un monto válido.")
-
 # Start polling
 bot.polling()
