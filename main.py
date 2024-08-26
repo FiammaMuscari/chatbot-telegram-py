@@ -36,7 +36,7 @@ inline_keyboard = InlineKeyboardMarkup()
 inline_buttons = [
     ("📥 Operar", "Operate"),
     ("📬 Countrier", "Countier"),
-    ("📩 Español", "LangSelect"),
+     ("⏰ Horarios", "Hours"),
     ("📤 Nosotros", "OurTeam"),
 ]
 inline_keyboard.row(
@@ -213,8 +213,17 @@ def handle_query(call):
             """,
             reply_markup=contact_keyboard
         )
-    elif callback_data == "LangSelect":
-        bot.answer_callback_query(call.id, "Idioma seleccionado!")
+    elif callback_data == "Hours":
+        bot.reply_to(
+            call.message,
+            """
+        Nuestro horario de atención es:
+        \n Lunes a Viernes: 9:00 AM - 7:00 PM
+        \n Sábados: 10:00 AM - 5:00 PM
+        \n Domingos: Cerrado
+        """,
+            reply_markup=inline_keyboard
+        )
     elif callback_data == "OurTeam":
         # Path to the image
         image_path = 'images/services.png'
