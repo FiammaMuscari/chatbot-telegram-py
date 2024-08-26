@@ -131,6 +131,14 @@ def show_hours(message):
     """,
         reply_markup=inline_keyboard
     )
+
+# Handle greetings
+greetings = ["hola", "hi", "hello", "ola", "saludos", "buenas", "hey","hii"]
+
+@bot.message_handler(func=lambda message: message.text.lower() in greetings)
+def handle_greetings(message):
+    send_welcome(message)  # Use the /start message to reply
+    
  
 # Handle callback queries
 @bot.callback_query_handler(func=lambda call: True)
@@ -237,9 +245,15 @@ def handle_query(call):
         )
     elif callback_data == "BackToMenu":
         reset_user_data(user_id)
-        bot.send_message(
-            call.message.chat.id,  
-            f"¡Hola {call.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.", 
+        
+        # Path to the image
+        image_path = 'images/calypso.jpg'
+        
+        # Send the image
+        bot.send_photo(
+            call.message.chat.id,
+            photo=open(image_path, 'rb'),
+            caption=f"¡Hola {call.from_user.first_name}! Bienvenido a nuestro operador en línea. Para dudas y órdenes, presione los botones o use los comandos disponibles. Para más información, use /help.",
             reply_markup=inline_keyboard
         )
     else:
